@@ -500,9 +500,48 @@ export default function ProduitsAdmin() {
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
         .form-label { font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.05em; }
-        .form-input, .form-select, .form-textarea { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; color: #fff; padding: 0.6rem 0.85rem; font-size: 0.875rem; font-family: var(--font-body, sans-serif); width: 100%; transition: border-color 0.18s; }
-        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: rgba(255,75,43,0.45); }
-        .form-select option { background: #0d1829; }
+/* AFTER */
+.form-input,
+.form-select,
+.form-textarea {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #0d1829;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 9px;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  padding: 0.7rem 0.85rem;
+  font-size: 16px;
+  line-height: 1.4;
+  font-family: var(--font-body, sans-serif);
+  width: 100%;
+  transition: border-color 0.18s, background-color 0.18s;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: rgba(255,255,255,0.4);
+  -webkit-text-fill-color: rgba(255,255,255,0.4);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  background-color: #0d1829;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+  border-color: rgba(255,75,43,0.45);
+  box-shadow: 0 0 0 3px rgba(255,75,43,0.12);
+}
+
+.form-select option {
+  background: #0d1829;
+  color: #ffffff;
+}        .form-select option { background: #0d1829; }
         .form-textarea { min-height: 90px; resize: vertical; }
         .checkbox-label { display: flex; align-items: center; gap: 0.55rem; font-size: 0.875rem; color: rgba(255,255,255,0.65); cursor: pointer; }
         .checkbox-label input { width: 15px; height: 15px; accent-color: #ff4b2b; }
@@ -536,6 +575,29 @@ export default function ProduitsAdmin() {
           .modal-actions { flex-direction: column-reverse; }
           .modal-actions > * { width: 100%; justify-content: center; }
         }
+          /* FIX: autofill dark background */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
+.form-select:-webkit-autofill,
+.form-textarea:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #0d1829 inset !important;
+  box-shadow: 0 0 0 1000px #0d1829 inset !important;
+  /* Prevent iPhone/Safari zoom on input focus */
+.form-input,
+.form-select,
+.form-textarea,
+input,
+select,
+textarea {
+  font-size: 16px !important;
+  line-height: 1.4;
+  transform: translateZ(0);
+}
+}
+          
       `}</style>
     </AdminLayout>
   )

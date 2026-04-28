@@ -472,6 +472,7 @@ export default function AdminLayout({ children, title }) {
             padding: 1rem 0.75rem;
           }
         }
+          
       `}</style>
     </div>
   )

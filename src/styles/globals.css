@@ -11,6 +11,8 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  /* FIX 4: Prevent horizontal overflow globally */
+  overflow-x: hidden;
 }
 
 :root {
@@ -48,6 +50,7 @@ body {
   background: #ffffff;
   color: var(--n-black);
   font-family: var(--font-body);
+  /* FIX 4: Prevent horizontal overflow globally */
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -91,6 +94,32 @@ svg {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--n-orange);
+}
+
+/* FIX 1: Prevent iOS Safari zoom on input focus — must be at root level, NOT nested inside media query */
+input,
+textarea,
+select,
+.form-input,
+.form-select,
+.form-textarea {
+  font-size: 16px;
+}
+
+/* FIX 3: Browser autofill overrides — public site inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--n-black);
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .container {
@@ -435,12 +464,16 @@ svg {
   color: #179c35;
 }
 
-/* ADMIN stays dark */
+/* ─── ADMIN DASHBOARD (stays dark) ─────────────────────────────────────── */
+
 .admin-layout {
   display: flex;
   min-height: 100vh;
   background: #030810;
   color: #ffffff;
+  /* FIX 4: Contain overflow inside admin layout */
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .admin-sidebar {
@@ -464,6 +497,9 @@ svg {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* FIX 4: Prevent admin main from overflowing */
+  max-width: calc(100vw - 260px);
+  overflow-x: hidden;
 }
 
 .admin-topbar {
@@ -482,10 +518,27 @@ svg {
 .admin-content {
   flex: 1;
   padding: 2rem;
+  /* FIX 4: Prevent admin content from overflowing */
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* FIX 5: Make tables scroll horizontally inside their container */
+.data-table-wrap {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  /* FIX 5: Enable horizontal scroll for wide tables */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 
 .data-table {
   width: 100%;
+  /* FIX 5: Allow table to scroll rather than squish */
+  min-width: 600px;
   border-collapse: collapse;
   font-size: 0.88rem;
 }
@@ -512,11 +565,51 @@ svg {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.data-table-wrap {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+/* FIX 2: Admin inputs — explicit dark theme colors so text is always readable */
+.admin-layout .form-input,
+.admin-layout .form-select,
+.admin-layout .form-textarea {
+  background: #06101E;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.admin-layout .form-input::placeholder,
+.admin-layout .form-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.admin-layout .form-input:focus,
+.admin-layout .form-select:focus,
+.admin-layout .form-textarea:focus {
+  background: #06101E;
+  border-color: rgba(255, 75, 43, 0.65);
+  box-shadow: 0 0 0 3px rgba(255, 75, 43, 0.14);
+}
+
+.admin-layout .form-select option {
+  background: #06101E;
+  color: #ffffff;
+}
+
+.admin-layout .form-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* FIX 3: Autofill overrides for admin dark inputs */
+.admin-layout input:-webkit-autofill,
+.admin-layout input:-webkit-autofill:hover,
+.admin-layout input:-webkit-autofill:focus,
+.admin-layout textarea:-webkit-autofill,
+.admin-layout textarea:-webkit-autofill:hover,
+.admin-layout textarea:-webkit-autofill:focus,
+.admin-layout select:-webkit-autofill,
+.admin-layout select:-webkit-autofill:hover,
+.admin-layout select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px #06101E inset;
+  box-shadow: 0 0 0 1000px #06101E inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .modal-overlay {
@@ -623,7 +716,7 @@ svg {
   transform: translateY(-3px);
 }
 
-
+/* ─── MOBILE ────────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
   html {
@@ -634,16 +727,23 @@ svg {
     padding: 4rem 1rem;
   }
 
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
   .form-grid-2 {
     grid-template-columns: 1fr;
   }
 
+  /* FIX 4: Admin layout collapses sidebar on mobile */
   .admin-sidebar {
     display: none;
   }
 
   .admin-main {
     margin-left: 0;
+    max-width: 100vw;
   }
 
   .floating-demo-btn {
@@ -653,22 +753,17 @@ svg {
     font-size: 0.86rem;
   }
 
-  html,
-  body {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
+  .modal {
+    width: min(100%, calc(100vw - 2rem));
+    padding: 1.2rem;
   }
 
-  #root {
-    width: 100%;
-    overflow-x: hidden;
+  /* FIX 5: Tables scroll on mobile */
+  .data-table-wrap {
+    max-width: calc(100vw - 2rem);
   }
 
-  * {
-    box-sizing: border-box;
-  }
-
+  /* Custom select arrow on mobile */
   .form-select {
     appearance: none;
     -webkit-appearance: none;
@@ -700,54 +795,19 @@ svg {
     color: #111;
   }
 
+  /* Admin select override on mobile */
   .admin-layout .form-select {
     background-color: #06101E;
     color: #fff;
     border-color: rgba(255, 255, 255, 0.12);
+    background-image:
+      linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.6) 50%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.6) 50%, transparent 50%);
   }
 
   .admin-layout .form-select option {
     background: #06101E;
     color: #fff;
   }
-
-  html,
-  body,
-  #root {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  body {
-    min-width: 0;
-  }
-
-  .admin-layout,
-  .admin-main,
-  .admin-content {
-    max-width: 100vw;
-    overflow-x: hidden;
-  }
-
-  @media (max-width: 768px) {
-    .container {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    .section {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    .modal {
-      width: min(100%, calc(100vw - 1rem));
-      padding: 1.2rem;
-    }
-
-    .data-table-wrap {
-      max-width: 100%;
-    }
-  }
+  
 }

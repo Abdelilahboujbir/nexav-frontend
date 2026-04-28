@@ -490,6 +490,7 @@ export default function DashboardAdmin() {
         @media (max-width: 380px) {
           .db-stats-grid { grid-template-columns: 1fr; }
         }
+          
       `}</style>
     </AdminLayout>
   )

@@ -293,12 +293,72 @@ export default function TypesProduitsAdmin() {
         .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap; padding-top: 0.25rem; }
 
         /* Form */
-        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-        .form-label { font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.05em; }
-        .form-input, .form-select, .form-textarea { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; color: #fff; padding: 0.6rem 0.85rem; font-size: 0.875rem; font-family: var(--font-body, sans-serif); width: 100%; transition: border-color 0.18s; }
-        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: rgba(255,75,43,0.45); }
-        .form-select option { background: #0d1829; }
-        .form-textarea { min-height: 90px; resize: vertical; }
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 9px;
+  color: #ffffff;
+  padding: 0.6rem 0.85rem;
+  font-size: 16px !important; /* stop mobile zoom */
+  line-height: 1.4;
+  font-family: var(--font-body, sans-serif);
+  width: 100%;
+  transition: border-color 0.18s, background 0.18s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: rgba(255,255,255,0.35);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: rgba(255,75,43,0.45);
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+}
+
+.form-select option {
+  background: #0d1829;
+  color: #ffffff;
+}
+
+.form-textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Fix autofill */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
+.form-select:-webkit-autofill,
+.form-textarea:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #0d1829 inset !important;
+  box-shadow: 0 0 0 1000px #0d1829 inset !important;
+}
 
         /* Delete warning */
         .delete-warning { display: flex; gap: 0.75rem; align-items: flex-start; padding: 1rem; background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.18); border-radius: 10px; color: rgba(255,255,255,0.7); font-size: 0.875rem; line-height: 1.55; }

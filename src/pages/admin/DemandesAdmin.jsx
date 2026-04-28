@@ -361,9 +361,42 @@ export default function DemandesAdmin() {
         .delete-warning strong { color: #fff; }
 
         /* Form */
-        .form-input { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; color: #fff; padding: 0.6rem 0.85rem; font-size: 0.875rem; font-family: var(--font-body, sans-serif); width: 100%; transition: border-color 0.18s; }
-        .form-input:focus { outline: none; border-color: rgba(255,75,43,0.45); }
+.form-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 9px;
+  color: #ffffff;
+  padding: 0.6rem 0.85rem;
+  font-size: 16px; /* important: prevents mobile zoom */
+  line-height: 1.4;
+  font-family: var(--font-body, sans-serif);
+  width: 100%;
+  transition: border-color 0.18s, background 0.18s;
+  appearance: none;
+  -webkit-appearance: none;
+}
 
+.form-input::placeholder {
+  color: rgba(255,255,255,0.35);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgba(255,75,43,0.45);
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+}
+
+/* Fix iOS autofill white background */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
+.form-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: 0 0 0 1000px rgba(13,24,41,1) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(13,24,41,1) inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
         /* Spinner */
         .loading-center { display: flex; align-items: center; justify-content: center; padding: 4rem; }
         .spinner { width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #ff4b2b; border-radius: 50%; animation: spin 0.75s linear infinite; }
@@ -380,6 +413,7 @@ export default function DemandesAdmin() {
           .modal-actions { flex-direction: column-reverse; }
           .modal-actions > * { width: 100%; justify-content: center; }
         }
+          
       `}</style>
     </AdminLayout>
   )
