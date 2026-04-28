@@ -22,7 +22,7 @@ export default function ContactHomeSection() {
               {[
                 { icon: 'pin', label: 'Adresse', value: 'Casablanca, Maroc' },
                 { icon: 'mail', label: 'E-mail', value: 'contact@nexav.ma' },
-                { icon: 'phone', label: 'Téléphone', value: '+212 5XX XX XX XX' },
+                { icon: 'phone', label: 'Téléphone', value: '+212 645 56 33 87' },
               ].map((d) => (
                 <div key={d.label} className="contact-item">
                   <div className="contact-icon">

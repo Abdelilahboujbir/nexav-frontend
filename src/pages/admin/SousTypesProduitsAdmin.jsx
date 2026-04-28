@@ -1,397 +1,325 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '../../components/admin/AdminLayout'
-import { adminGetTypes } from '../../api/typesProduits'
 import {
-    adminGetSousTypes,
-    adminCreateSousType,
-    adminUpdateSousType,
-    adminDeleteSousType,
-} from '../../api/sousTypesProduits'
+  adminGetTypes,
+  adminCreateType,
+  adminUpdateType,
+  adminDeleteType,
+} from '../../api/typesProduits'
+import { Plus, Pencil, Trash2, FolderOpen, X, AlertTriangle } from 'lucide-react'
 
-const EMPTY_FORM = {
-    type_produit_id: '',
-    nom: '',
-    description: '',
+const EMPTY_FORM = { nom: '', slug: '', description: '' }
+
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
 }
 
-export default function SousTypesProduitsAdmin() {
-    const [types, setTypes] = useState([])
-    const [sousTypes, setSousTypes] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [modal, setModal] = useState(null)
-    const [editing, setEditing] = useState(null)
-    const [form, setForm] = useState(EMPTY_FORM)
-    const [saving, setSaving] = useState(false)
-    const [error, setError] = useState('')
-    const [deleteConfirm, setDeleteConfirm] = useState(null)
+export default function TypesProduitsAdmin() {
+  const [types, setTypes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [modal, setModal] = useState(null)
+  const [editing, setEditing] = useState(null)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
 
-    const load = () => {
-        setLoading(true)
-        setError('')
+  const load = () => {
+    setLoading(true)
+    setError('')
+    adminGetTypes()
+      .then((r) => {
+        const data = Array.isArray(r.data) ? r.data : (r.data?.types || [])
+        setTypes(data)
+      })
+      .catch(() => setError('Erreur de chargement'))
+      .finally(() => setLoading(false))
+  }
 
-        Promise.all([adminGetTypes(), adminGetSousTypes()])
-            .then(([tRes, stRes]) => {
-                const typesData = Array.isArray(tRes.data) ? tRes.data : tRes.data.types || []
-                const sousTypesData = Array.isArray(stRes.data)
-                    ? stRes.data
-                    : stRes.data.sous_types || stRes.data.sousTypes || []
-                setTypes(typesData)
-                setSousTypes(sousTypesData)
-            })
-            .catch(() => setError('Erreur de chargement'))
-            .finally(() => setLoading(false))
+  useEffect(() => { load() }, [])
+
+  const openCreate = () => {
+    setForm(EMPTY_FORM)
+    setEditing(null)
+    setError('')
+    setModal('create')
+  }
+
+  const openEdit = (type) => {
+    setForm({ nom: type.nom || '', slug: type.slug || '', description: type.description || '' })
+    setEditing(type)
+    setError('')
+    setModal('edit')
+  }
+
+  const closeModal = () => { setModal(null); setEditing(null); setError('') }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value, ...(name === 'nom' ? { slug: slugify(value) } : {}) }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      if (modal === 'create') await adminCreateType(form)
+      else await adminUpdateType(editing.id, form)
+      closeModal()
+      load()
+    } catch (err) {
+      const msgs = err.response?.data?.errors
+      if (msgs) setError(Object.values(msgs).flat().join(' | '))
+      else setError(err.response?.data?.message || 'Une erreur est survenue.')
+    } finally {
+      setSaving(false)
     }
+  }
 
-    useEffect(() => {
-        load()
-    }, [])
-
-    const openCreate = () => {
-        setForm({
-            ...EMPTY_FORM,
-            type_produit_id: types[0]?.id || '',
-        })
-        setEditing(null)
-        setError('')
-        setModal('create')
+  const handleDelete = async (id) => {
+    try {
+      await adminDeleteType(id)
+      setDeleteConfirm(null)
+      load()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Impossible de supprimer ce type.')
+      setDeleteConfirm(null)
     }
+  }
 
-    const openEdit = (item) => {
-        setForm({
-            type_produit_id: item.type_produit_id || '',
-            nom: item.nom || '',
-            description: item.description || '',
-        })
-        setEditing(item)
-        setError('')
-        setModal('edit')
-    }
+  return (
+    <AdminLayout title="Types de produits">
+      <div className="ph">
+        <div>
+          <h2 className="ph-title">Types de produits</h2>
+          <p className="ph-sub">{types.length} type{types.length > 1 ? 's' : ''} enregistré{types.length > 1 ? 's' : ''}</p>
+        </div>
+        <button onClick={openCreate} className="btn-primary">
+          <Plus size={15} /> Nouveau type
+        </button>
+      </div>
 
-    const closeModal = () => {
-        setModal(null)
-        setEditing(null)
-        setError('')
-    }
+      {error && !modal && <div className="alert-error">{error}</div>}
 
-    const handleChange = (e) => {
-        const { name, value } = e.target
-        setForm((prev) => ({ ...prev, [name]: value }))
-    }
+      {loading ? (
+        <div className="loading-center"><div className="spinner" /></div>
+      ) : types.length === 0 ? (
+        <div className="empty-state">
+          <FolderOpen size={40} strokeWidth={1.2} />
+          <h3>Aucun type</h3>
+          <button onClick={openCreate} className="btn-primary" style={{ marginTop: '1rem' }}>Créer le premier type</button>
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="table-wrap desktop-table">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nom</th>
+                  <th>Slug</th>
+                  <th>Description</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {types.map((t) => (
+                  <tr key={t.id}>
+                    <td className="muted">#{t.id}</td>
+                    <td><strong className="item-name">{t.nom}</strong></td>
+                    <td><code className="code-tag">{t.slug}</code></td>
+                    <td className="desc-cell">{t.description ? (t.description.length > 100 ? t.description.slice(0, 100) + '…' : t.description) : '—'}</td>
+                    <td>
+                      <div className="row-actions">
+                        <button onClick={() => openEdit(t)} className="action-btn action-edit">
+                          <Pencil size={13} /> Modifier
+                        </button>
+                        <button onClick={() => setDeleteConfirm(t)} className="action-btn action-delete">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        setSaving(true)
-        setError('')
-
-        try {
-            if (modal === 'create') {
-                await adminCreateSousType(form)
-            } else {
-                await adminUpdateSousType(editing.id, form)
-            }
-
-            closeModal()
-            load()
-        } catch (err) {
-            const msgs = err.response?.data?.errors
-            if (msgs) setError(Object.values(msgs).flat().join(' | '))
-            else setError(err.response?.data?.message || 'Une erreur est survenue.')
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleDelete = async (id) => {
-        try {
-            await adminDeleteSousType(id)
-            setDeleteConfirm(null)
-            load()
-        } catch (err) {
-            setError(err.response?.data?.message || 'Impossible de supprimer ce sous-type.')
-            setDeleteConfirm(null)
-        }
-    }
-
-    return (
-        <AdminLayout title="Sous-types de produits">
-            <div className="admin-page-head">
-                <div>
-                    <h2>Sous-types de produits</h2>
-                    <p>
-                        {sousTypes.length} sous-type{sousTypes.length > 1 ? 's' : ''} enregistré{sousTypes.length > 1 ? 's' : ''}
-                    </p>
+          {/* Mobile cards */}
+          <div className="mobile-cards">
+            {types.map((t) => (
+              <div key={t.id} className="item-card">
+                <div className="item-card-body">
+                  <div className="item-card-row">
+                    <strong className="item-name">{t.nom}</strong>
+                    <code className="code-tag">{t.slug}</code>
+                  </div>
+                  {t.description && <p className="item-desc">{t.description}</p>}
                 </div>
+                <div className="item-card-actions">
+                  <button onClick={() => openEdit(t)} className="action-btn action-edit">
+                    <Pencil size={13} /> Modifier
+                  </button>
+                  <button onClick={() => setDeleteConfirm(t)} className="action-btn action-delete">
+                    <Trash2 size={13} /> Supprimer
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
-                <button onClick={openCreate} className="btn btn-primary btn-sm">
-                    + Nouveau sous-type
-                </button>
+      {/* Create / Edit modal */}
+      {modal && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}>
+          <div className="modal modal-md">
+            <div className="modal-head">
+              <h2 className="modal-title">{modal === 'create' ? 'Nouveau type' : 'Modifier le type'}</h2>
+              <button className="modal-close" onClick={closeModal}><X size={18} /></button>
             </div>
+            {error && <div className="alert-error modal-alert">{error}</div>}
+            <form onSubmit={handleSubmit} className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Nom *</label>
+                <input name="nom" value={form.nom} onChange={handleChange} placeholder="Ex : Écrans" className="form-input" required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Slug *</label>
+                <input name="slug" value={form.slug} onChange={handleChange} placeholder="ecrans" className="form-input" required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <textarea name="description" value={form.description} onChange={handleChange} className="form-textarea" placeholder="Description du type..." />
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={closeModal} className="btn-secondary">Annuler</button>
+                <button type="submit" disabled={saving} className="btn-primary">
+                  {saving ? 'Enregistrement...' : modal === 'create' ? 'Créer' : 'Mettre à jour'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-            {error && !modal && (
-                <div className="error-message" style={{ marginBottom: '1rem' }}>
-                    {error}
-                </div>
-            )}
+      {/* Delete confirm */}
+      {deleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal modal-sm">
+            <div className="modal-head">
+              <h2 className="modal-title">Supprimer le type</h2>
+              <button className="modal-close" onClick={() => setDeleteConfirm(null)}><X size={18} /></button>
+            </div>
+            <div className="modal-body">
+              <div className="delete-warning">
+                <AlertTriangle size={18} />
+                <p>Voulez-vous supprimer <strong>{deleteConfirm.nom}</strong> ? Cette action peut affecter les produits associés.</p>
+              </div>
+              <div className="modal-actions">
+                <button onClick={() => setDeleteConfirm(null)} className="btn-secondary">Annuler</button>
+                <button onClick={() => handleDelete(deleteConfirm.id)} className="btn-danger">Supprimer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-            {loading ? (
-                <div className="loading-center">
-                    <div className="spinner" />
-                </div>
-            ) : sousTypes.length === 0 ? (
-                <div className="empty-state">
-                    <h3>Aucun sous-type</h3>
-                    <button onClick={openCreate} className="btn btn-primary btn-sm" style={{ marginTop: '1rem' }}>
-                        Créer le premier sous-type
-                    </button>
-                </div>
-            ) : (
-                <div className="data-table-wrap">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Sous-type</th>
-                                <th>Type parent</th>
-                                <th>Slug</th>
-                                <th>Description</th>
-                                <th style={{ textAlign: 'right' }}>Actions</th>
-                            </tr>
-                        </thead>
+      <style>{`
+        .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; gap: 1rem; flex-wrap: wrap; }
+        .ph-title { font-family: var(--font-head, sans-serif); font-size: 1.1rem; font-weight: 800; color: #fff; }
+        .ph-sub { font-size: 0.82rem; color: rgba(255,255,255,0.38); margin-top: 0.2rem; }
 
-                        <tbody>
-                            {sousTypes.map((st) => (
-                                <tr key={st.id}>
-                                    <td style={{ color: 'var(--n-gray)', fontSize: '0.8rem' }}>#{st.id}</td>
+        .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171; border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.85rem; margin-bottom: 1rem; }
+        .modal-alert { margin: 0 1.5rem; }
 
-                                    <td>
-                                        <strong style={{ color: '#fff' }}>{st.nom}</strong>
-                                    </td>
+        .empty-state { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 4rem 2rem; color: rgba(255,255,255,0.25); text-align: center; }
+        .empty-state h3 { color: rgba(255,255,255,0.45); font-size: 1rem; font-weight: 600; }
 
-                                    <td>
-                                        <span className="badge badge-cyan">
-                                            {st.type_produit?.nom || st.typeProduit?.nom || types.find(t => t.id === st.type_produit_id)?.nom || '—'}
-                                        </span>
-                                    </td>
+        .table-wrap { width: 100%; overflow-x: auto; border-radius: 14px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); }
+        .data-table { width: 100%; min-width: 620px; border-collapse: collapse; }
+        .data-table th { padding: 0.75rem 1rem; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.35); text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); }
+        .data-table td { padding: 0.85rem 1rem; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: rgba(255,255,255,0.02); }
 
-                                    <td>
-                                        <code className="admin-code">{st.slug}</code>
-                                    </td>
+        .item-name { color: #fff; font-size: 0.875rem; }
+        .muted { color: rgba(255,255,255,0.38); font-size: 0.8rem; }
+        .desc-cell { color: rgba(255,255,255,0.45); font-size: 0.835rem; max-width: 360px; line-height: 1.5; }
+        .code-tag { font-size: 0.77rem; color: #ff4b2b; background: rgba(255,75,43,0.09); padding: 0.18rem 0.48rem; border-radius: 5px; word-break: break-all; font-family: monospace; }
 
-                                    <td style={{ color: 'var(--n-gray)', fontSize: '0.84rem', maxWidth: 320 }}>
-                                        {st.description
-                                            ? st.description.length > 90
-                                                ? st.description.slice(0, 90) + '…'
-                                                : st.description
-                                            : '—'}
-                                    </td>
+        .row-actions { display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center; }
+        .action-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.32rem 0.65rem; border-radius: 7px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border: 1px solid transparent; font-family: var(--font-body, sans-serif); transition: all 0.15s; }
+        .action-edit { background: rgba(255,75,43,0.1); border-color: rgba(255,75,43,0.22); color: #ff4b2b; }
+        .action-edit:hover { background: rgba(255,75,43,0.2); }
+        .action-delete { background: rgba(239,68,68,0.07); border-color: rgba(239,68,68,0.18); color: #f87171; }
+        .action-delete:hover { background: rgba(239,68,68,0.16); }
 
-                                    <td>
-                                        <div className="table-actions">
-                                            <button onClick={() => openEdit(st)} className="action-btn edit">
-                                                Modifier
-                                            </button>
+        /* Mobile cards */
+        .mobile-cards { display: none; flex-direction: column; gap: 0.75rem; }
+        .item-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
+        .item-card-body { padding: 1rem; }
+        .item-card-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+        .item-desc { font-size: 0.82rem; color: rgba(255,255,255,0.4); line-height: 1.5; margin-top: 0.35rem; }
+        .item-card-actions { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
+        .item-card-actions .action-btn { flex: 1; justify-content: center; }
 
-                                            <button onClick={() => setDeleteConfirm(st)} className="action-btn delete">
-                                                Supprimer
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+        /* Buttons */
+        .btn-primary { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; background: #ff4b2b; color: #fff; border: none; border-radius: 9px; font-weight: 700; font-size: 0.855rem; cursor: pointer; font-family: var(--font-body, sans-serif); transition: background 0.18s; white-space: nowrap; }
+        .btn-primary:hover { background: #e0401f; }
+        .btn-secondary { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; font-weight: 700; font-size: 0.855rem; cursor: pointer; font-family: var(--font-body, sans-serif); transition: all 0.18s; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.09); color: #fff; }
+        .btn-danger { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); border-radius: 9px; font-weight: 700; font-size: 0.855rem; cursor: pointer; font-family: var(--font-body, sans-serif); transition: all 0.18s; }
+        .btn-danger:hover { background: rgba(239,68,68,0.25); }
 
-            {modal && (
-                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}>
-                    <div className="modal" style={{ maxWidth: 540 }}>
-                        <div className="modal-header">
-                            <h2 className="modal-title">
-                                {modal === 'create' ? 'Nouveau sous-type' : 'Modifier le sous-type'}
-                            </h2>
-                            <button className="modal-close" onClick={closeModal}>✕</button>
-                        </div>
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .modal { background: #0d1829; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; flex-direction: column; max-height: 92vh; overflow: hidden; }
+        .modal-md { width: min(540px, 100%); }
+        .modal-sm { width: min(420px, 100%); }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0; }
+        .modal-title { font-family: var(--font-head, sans-serif); font-size: 1rem; font-weight: 800; color: #fff; }
+        .modal-close { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+        .modal-close:hover { background: rgba(255,255,255,0.09); color: #fff; }
+        .modal-body { padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap; padding-top: 0.25rem; }
 
-                        {error && (
-                            <div className="error-message" style={{ marginBottom: '1rem' }}>
-                                {error}
-                            </div>
-                        )}
+        /* Form */
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        .form-label { font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.05em; }
+        .form-input, .form-select, .form-textarea { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; color: #fff; padding: 0.6rem 0.85rem; font-size: 0.875rem; font-family: var(--font-body, sans-serif); width: 100%; transition: border-color 0.18s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: rgba(255,75,43,0.45); }
+        .form-select option { background: #0d1829; }
+        .form-textarea { min-height: 90px; resize: vertical; }
 
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-group" style={{ marginBottom: '1rem' }}>
-                                <label className="form-label">Type parent *</label>
-                                <select
-                                    name="type_produit_id"
-                                    value={form.type_produit_id}
-                                    onChange={handleChange}
-                                    className="form-select"
-                                    required
-                                >
-                                    <option value="">Sélectionner un type</option>
-                                    {types.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.nom}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+        /* Delete warning */
+        .delete-warning { display: flex; gap: 0.75rem; align-items: flex-start; padding: 1rem; background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.18); border-radius: 10px; color: rgba(255,255,255,0.7); font-size: 0.875rem; line-height: 1.55; }
+        .delete-warning svg { color: #f87171; flex-shrink: 0; margin-top: 2px; }
+        .delete-warning strong { color: #fff; }
 
-                            <div className="form-group" style={{ marginBottom: '1rem' }}>
-                                <label className="form-label">Nom du sous-type *</label>
-                                <input
-                                    name="nom"
-                                    value={form.nom}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                    placeholder="Ex : Écrans interactifs"
-                                    required
-                                />
-                            </div>
+        /* Spinner */
+        .loading-center { display: flex; align-items: center; justify-content: center; padding: 4rem; }
+        .spinner { width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #ff4b2b; border-radius: 50%; animation: spin 0.75s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-                            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                                <label className="form-label">Description</label>
-                                <textarea
-                                    name="description"
-                                    value={form.description}
-                                    onChange={handleChange}
-                                    className="form-textarea"
-                                    placeholder="Description courte du sous-type..."
-                                    style={{ minHeight: 90 }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                                <button type="button" onClick={closeModal} className="btn btn-secondary btn-sm">
-                                    Annuler
-                                </button>
-
-                                <button type="submit" disabled={saving} className="btn btn-primary btn-sm">
-                                    {saving ? 'Enregistrement...' : modal === 'create' ? 'Créer' : 'Mettre à jour'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {deleteConfirm && (
-                <div className="modal-overlay">
-                    <div className="modal" style={{ maxWidth: 420 }}>
-                        <div className="modal-header">
-                            <h2 className="modal-title">Supprimer le sous-type</h2>
-                            <button className="modal-close" onClick={() => setDeleteConfirm(null)}>✕</button>
-                        </div>
-
-                        <p className="delete-text">
-                            Voulez-vous supprimer <strong>{deleteConfirm.nom}</strong> ?
-                            Les produits associés garderont le type principal mais perdront ce sous-type.
-                        </p>
-
-                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                            <button onClick={() => setDeleteConfirm(null)} className="btn btn-secondary btn-sm">
-                                Annuler
-                            </button>
-
-                            <button onClick={() => handleDelete(deleteConfirm.id)} className="delete-btn">
-                                Supprimer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <style>{`
-        .admin-page-head {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-
-        .admin-page-head h2 {
-          font-family: var(--font-head);
-          font-size: 1.1rem;
-          font-weight: 800;
-          color: #fff;
-        }
-
-        .admin-page-head p {
-          font-size: 0.84rem;
-          color: var(--n-gray);
-          margin-top: 0.2rem;
-        }
-
-        .admin-code {
-          font-size: 0.78rem;
-          color: var(--n-orange);
-          background: rgba(255,75,43,0.08);
-          padding: 0.18rem 0.45rem;
-          border-radius: 5px;
-        }
-
-        .table-actions {
-          display: flex;
-          gap: 0.5rem;
-          justify-content: flex-end;
-          flex-wrap: wrap;
-        }
-
-        .action-btn {
-          padding: 0.36rem 0.8rem;
-          font-size: 0.78rem;
-          border-radius: 7px;
-          cursor: pointer;
-          font-family: var(--font-body);
-          font-weight: 700;
-          transition: 0.2s;
-        }
-
-        .action-btn.edit {
-          background: rgba(255,75,43,0.12);
-          border: 1px solid rgba(255,75,43,0.25);
-          color: var(--n-orange);
-        }
-
-        .action-btn.edit:hover {
-          background: rgba(255,75,43,0.2);
-        }
-
-        .action-btn.delete,
-        .delete-btn {
-          background: rgba(239,68,68,0.1);
-          border: 1px solid rgba(239,68,68,0.25);
-          color: #f87171;
-        }
-
-        .action-btn.delete:hover,
-        .delete-btn:hover {
-          background: rgba(239,68,68,0.18);
-        }
-
-        .delete-text {
-          font-size: 0.9rem;
-          color: rgba(255,255,255,0.68);
-          margin-bottom: 1.5rem;
-          line-height: 1.6;
-        }
-
-        .delete-text strong {
-          color: #fff;
-        }
-
-        .delete-btn {
-          padding: 0.5rem 1rem;
-          border-radius: 7px;
-          cursor: pointer;
-          font-size: 0.83rem;
-          font-family: var(--font-body);
-          font-weight: 800;
+        /* Responsive */
+        @media (max-width: 720px) {
+          .desktop-table { display: none; }
+          .mobile-cards { display: flex; }
+          .ph { flex-direction: column; align-items: stretch; }
+          .ph > button { width: 100%; justify-content: center; }
+          .modal-actions { flex-direction: column-reverse; }
+          .modal-actions > * { width: 100%; justify-content: center; }
         }
       `}</style>
-        </AdminLayout>
-    )
+    </AdminLayout>
+  )
 }

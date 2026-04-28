@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { adminGetProduit, adminGetMedias, adminAddMedia, adminDeleteMedia } from '../../api/produits'
+import { assetUrl } from '../../api/assets'
 
 export default function MediasAdmin() {
   const { id } = useParams()
@@ -56,7 +57,7 @@ export default function MediasAdmin() {
     if (f.type.startsWith('image')) {
       setPreview(URL.createObjectURL(f))
     } else {
-      setPreview(null) // video preview handled differently
+      setPreview(null)
     }
   }
 
@@ -116,9 +117,9 @@ export default function MediasAdmin() {
         </div>
       ) : (
         <div className="media-admin-grid">
-          <div>
-            {error && <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
-            {success && <div className="success-message" style={{ marginBottom: '1rem' }}>{success}</div>}
+          <div className="media-left">
+            {error && <div className="error-message message-space">{error}</div>}
+            {success && <div className="success-message message-space">{success}</div>}
 
             <section className="media-section">
               <div className="media-section-head">
@@ -134,8 +135,8 @@ export default function MediasAdmin() {
                       <button
                         type="button"
                         className="image-preview"
-                        style={{ backgroundImage: `url(/storage/${m.chemin_media})` }}
-                        onClick={() => setLightbox(`/storage/${m.chemin_media}`)}
+                        style={{ backgroundImage: `url(${assetUrl(m.chemin_media)})` }}
+                        onClick={() => setLightbox(assetUrl(m.chemin_media))}
                         aria-label="Afficher l'image"
                       />
 
@@ -157,15 +158,15 @@ export default function MediasAdmin() {
               {videos.length === 0 ? (
                 <EmptyBox text="Aucune vidéo" small />
               ) : (
-                <div className="videos-list">
+                <div className="videos-grid">
                   {videos.map((m) => (
-                    <div key={m.id} style={{ width: 200 }}>
-                      <video
-                        src={`/storage/${m.chemin_media}`}
-                        controls
-                        style={{ width: '100%', borderRadius: 8 }}
-                      />
-                      <button onClick={() => setDeleteConfirm(m)}>Supprimer</button>
+                    <div key={m.id} className="video-card">
+                      <video src={assetUrl(m.chemin_media)} controls />
+
+                      <div className="media-card-foot">
+                        <span>#{m.id}</span>
+                        <button onClick={() => setDeleteConfirm(m)}>Supprimer</button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -177,7 +178,7 @@ export default function MediasAdmin() {
             <h3>Ajouter un média</h3>
 
             <form onSubmit={handleUpload}>
-              <div className="form-group" style={{ marginBottom: '0.9rem' }}>
+              <div className="form-group form-space">
                 <label className="form-label">Type de média</label>
                 <select
                   value={typeMedia}
@@ -193,12 +194,12 @@ export default function MediasAdmin() {
                 </select>
               </div>
 
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+              <div className="form-group form-space-lg">
                 <label className="form-label">Fichier</label>
 
                 <input
                   type="file"
-                  accept={"image/*,video/*"}
+                  accept="image/*,video/*"
                   onChange={handleFile}
                   id="media-upload"
                   style={{ display: 'none' }}
@@ -231,7 +232,7 @@ export default function MediasAdmin() {
 
       {lightbox && (
         <div className="modal-overlay" onClick={() => setLightbox(null)}>
-          <div className="lightbox-box">
+          <div className="lightbox-box" onClick={(e) => e.stopPropagation()}>
             <img src={lightbox} alt="Aperçu" />
             <button onClick={() => setLightbox(null)}>✕</button>
           </div>
@@ -240,7 +241,7 @@ export default function MediasAdmin() {
 
       {deleteConfirm && (
         <div className="modal-overlay">
-          <div className="modal" style={{ maxWidth: 380 }}>
+          <div className="modal delete-modal">
             <div className="modal-header">
               <h2 className="modal-title">Supprimer ce média</h2>
               <button className="modal-close" onClick={() => setDeleteConfirm(null)}>✕</button>
@@ -250,7 +251,7 @@ export default function MediasAdmin() {
               Cette action est irréversible. Le fichier sera définitivement supprimé.
             </p>
 
-            <div className="modal-actions">
+            <div className="modal-actions-responsive">
               <button onClick={() => setDeleteConfirm(null)} className="btn btn-secondary btn-sm">
                 Annuler
               </button>
@@ -272,6 +273,7 @@ export default function MediasAdmin() {
           color: var(--n-gray);
           margin-bottom: 1.5rem;
           flex-wrap: wrap;
+          min-width: 0;
         }
 
         .media-breadcrumb a {
@@ -286,6 +288,7 @@ export default function MediasAdmin() {
         .media-breadcrumb strong,
         .media-breadcrumb span:nth-child(3) {
           color: #fff;
+          word-break: break-word;
         }
 
         .media-admin-grid {
@@ -293,6 +296,14 @@ export default function MediasAdmin() {
           grid-template-columns: minmax(0, 1fr) 320px;
           gap: 2rem;
           align-items: start;
+        }
+
+        .media-left {
+          min-width: 0;
+        }
+
+        .message-space {
+          margin-bottom: 1rem;
         }
 
         .media-section {
@@ -304,6 +315,7 @@ export default function MediasAdmin() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 1rem;
+          gap: 1rem;
         }
 
         .media-section-head h3,
@@ -329,6 +341,8 @@ export default function MediasAdmin() {
           justify-content: center;
           color: var(--n-gray);
           font-size: 0.85rem;
+          text-align: center;
+          padding: 1rem;
         }
 
         .empty-media-box.small {
@@ -341,11 +355,13 @@ export default function MediasAdmin() {
           gap: 0.75rem;
         }
 
-        .image-card {
+        .image-card,
+        .video-card {
           border-radius: 12px;
           overflow: hidden;
           border: 1px solid rgba(255,255,255,0.08);
           background: rgba(255,255,255,0.03);
+          min-width: 0;
         }
 
         .image-preview {
@@ -358,11 +374,25 @@ export default function MediasAdmin() {
           display: block;
         }
 
+        .videos-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 0.85rem;
+        }
+
+        .video-card video {
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          background: #000;
+          display: block;
+        }
+
         .media-card-foot {
           padding: 0.55rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 0.5rem;
           background: rgba(10,22,40,0.75);
         }
 
@@ -371,8 +401,7 @@ export default function MediasAdmin() {
           color: var(--n-gray);
         }
 
-        .media-card-foot button,
-        .delete-small {
+        .media-card-foot button {
           background: rgba(239,68,68,0.1);
           border: 1px solid rgba(239,68,68,0.2);
           color: #f87171;
@@ -383,44 +412,6 @@ export default function MediasAdmin() {
           font-family: var(--font-body);
         }
 
-        .videos-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .video-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1rem;
-          padding: 0.8rem 1rem;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: var(--radius-sm);
-        }
-
-        .video-name {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          font-size: 0.86rem;
-          color: rgba(255,255,255,0.72);
-          min-width: 0;
-        }
-
-        .video-name svg {
-          color: var(--n-orange);
-          flex-shrink: 0;
-        }
-
-        .video-name span {
-          max-width: 320px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
         .upload-card {
           background: rgba(255,255,255,0.02);
           border: 1px solid rgba(255,255,255,0.08);
@@ -428,9 +419,18 @@ export default function MediasAdmin() {
           padding: 1.5rem;
           position: sticky;
           top: 80px;
+          min-width: 0;
         }
 
         .upload-card h3 {
+          margin-bottom: 1.25rem;
+        }
+
+        .form-space {
+          margin-bottom: 0.9rem;
+        }
+
+        .form-space-lg {
           margin-bottom: 1.25rem;
         }
 
@@ -449,6 +449,7 @@ export default function MediasAdmin() {
           color: var(--n-gray);
           text-align: center;
           padding: 0.8rem;
+          min-width: 0;
         }
 
         .upload-zone:hover,
@@ -459,10 +460,13 @@ export default function MediasAdmin() {
 
         .upload-zone svg {
           color: var(--n-orange);
+          flex-shrink: 0;
         }
 
         .upload-zone span {
           font-size: 0.78rem;
+          word-break: break-word;
+          max-width: 100%;
         }
 
         .upload-zone img {
@@ -482,6 +486,7 @@ export default function MediasAdmin() {
           max-width: 100%;
           max-height: 85vh;
           border-radius: 12px;
+          display: block;
         }
 
         .lightbox-box button {
@@ -498,6 +503,11 @@ export default function MediasAdmin() {
           cursor: pointer;
         }
 
+        .delete-modal {
+          max-width: 380px;
+          width: min(380px, calc(100vw - 1.5rem));
+        }
+
         .delete-text {
           font-size: 0.88rem;
           color: rgba(255,255,255,0.65);
@@ -505,7 +515,7 @@ export default function MediasAdmin() {
           line-height: 1.6;
         }
 
-        .modal-actions {
+        .modal-actions-responsive {
           display: flex;
           gap: 0.75rem;
           justify-content: flex-end;
@@ -524,7 +534,7 @@ export default function MediasAdmin() {
           font-weight: 700;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1000px) {
           .media-admin-grid {
             grid-template-columns: 1fr;
           }
@@ -532,6 +542,59 @@ export default function MediasAdmin() {
           .upload-card {
             position: relative;
             top: 0;
+            order: -1;
+          }
+        }
+
+        @media (max-width: 720px) {
+          .images-grid {
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          }
+
+          .videos-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .modal-actions-responsive {
+            flex-direction: column-reverse;
+          }
+
+          .modal-actions-responsive .btn,
+          .modal-actions-responsive .delete-btn {
+            width: 100%;
+          }
+        }
+
+        @media (max-width: 520px) {
+          .media-admin-grid {
+            gap: 1rem;
+          }
+
+          .upload-card {
+            padding: 1rem;
+          }
+
+          .images-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+          }
+
+          .image-preview {
+            height: 105px;
+          }
+
+          .media-card-foot {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .media-card-foot button {
+            width: 100%;
+          }
+
+          .lightbox-box button {
+            top: 8px;
+            right: 8px;
           }
         }
       `}</style>
