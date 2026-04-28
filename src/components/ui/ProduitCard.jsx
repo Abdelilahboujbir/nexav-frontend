@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
+import { assetUrl } from '../../api/assets'
 
 export default function ProduitCard({ produit }) {
   const imgSrc = produit.image_principale
-    ? `/storage/${produit.image_principale}`
-    : null
+  ? assetUrl(produit.image_principale)
+  : null
 
   return (
     <Link
