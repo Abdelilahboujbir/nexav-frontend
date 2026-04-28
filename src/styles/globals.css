@@ -623,15 +623,7 @@ svg {
   transform: translateY(-3px);
 }
 
-@media (max-width: 1024px) {
-  .admin-sidebar {
-    width: 220px;
-  }
 
-  .admin-main {
-    margin-left: 220px;
-  }
-}
 
 @media (max-width: 768px) {
   html {
@@ -717,5 +709,45 @@ svg {
   .admin-layout .form-select option {
     background: #06101E;
     color: #fff;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-width: 0;
+  }
+
+  .admin-layout,
+  .admin-main,
+  .admin-content {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .section {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .modal {
+      width: min(100%, calc(100vw - 1rem));
+      padding: 1.2rem;
+    }
+
+    .data-table-wrap {
+      max-width: 100%;
+    }
   }
 }
