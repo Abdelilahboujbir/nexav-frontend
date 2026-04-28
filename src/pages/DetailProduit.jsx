@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import DemandeForm from '../components/ui/DemandeForm'
 import { getProduit } from '../api/produits'
+import { assetUrl } from '../api/assets'
 
 export default function DetailProduit() {
   const { id } = useParams()
@@ -22,9 +23,9 @@ export default function DetailProduit() {
 
         setActiveMedia(
           firstImg
-            ? `/storage/${firstImg.chemin_media}`
+            ? assetUrl(firstImg.chemin_media)
             : data.image_principale
-              ? `/storage/${data.image_principale}`
+              ? assetUrl(data.image_principale)
               : null
         )
       })
@@ -99,18 +100,18 @@ export default function DetailProduit() {
                 <div className="product-thumbs">
                   {produit.image_principale && (
                     <Thumb
-                      src={`/storage/${produit.image_principale}`}
-                      active={activeMedia === `/storage/${produit.image_principale}`}
-                      onClick={() => setActiveMedia(`/storage/${produit.image_principale}`)}
+                      src={assetUrl(produit.image_principale)}
+                      active={activeMedia === assetUrl(produit.image_principale)}
+                      onClick={() => setActiveMedia(assetUrl(produit.image_principale))}
                     />
                   )}
 
                   {images.map((m) => (
                     <Thumb
                       key={m.id}
-                      src={`/storage/${m.chemin_media}`}
-                      active={activeMedia === `/storage/${m.chemin_media}`}
-                      onClick={() => setActiveMedia(`/storage/${m.chemin_media}`)}
+                      src={assetUrl(m.chemin_media)}
+                      active={activeMedia === assetUrl(m.chemin_media)}
+                      onClick={() => setActiveMedia(assetUrl(m.chemin_media))}
                     />
                   ))}
                 </div>
@@ -121,7 +122,7 @@ export default function DetailProduit() {
                   <div className="product-video-label">Vidéos</div>
                   {produit.video_url && <VideoPlayer url={produit.video_url} title={produit.nom} />}
                   {videos.map((v) => (
-                    <VideoPlayer key={v.id} url={`/storage/${v.chemin_media}`} title={produit.nom} />
+                    <VideoPlayer key={v.id} url={assetUrl(v.chemin_media)} title={produit.nom} />
                   ))}
                 </div>
               )}
