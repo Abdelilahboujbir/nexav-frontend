@@ -218,6 +218,44 @@ export default function LoginAdmin() {
         .back-site:hover {
           color: #fff;
         }
+          .form-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 9px;
+  color: #ffffff;
+  padding: 0.75rem 0.9rem;
+  font-size: 16px !important;
+  line-height: 1.4;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+}
+
+.form-input::placeholder {
+  color: rgba(255,255,255,0.35);
+  -webkit-text-fill-color: rgba(255,255,255,0.35);
+}
+
+.form-input:focus {
+  outline: none;
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,75,43,0.45);
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+}
+
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
+.form-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #06101E inset !important;
+  box-shadow: 0 0 0 1000px #06101E inset !important;
+}
       `}</style>
     </div>
   )
