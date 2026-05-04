@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { label: 'Tableau de bord', icon: LayoutDashboard, to: '/admin/dashboard' },
   { label: 'Produits', icon: Monitor, to: '/admin/produits' },
   { label: 'Types de produits', icon: FolderOpen, to: '/admin/types-produits' },
-  { label: 'Sous-types', icon: Layers, to: '/admin/sous-types-produits' },
+  { label: 'Sous types', icon: Layers, to: '/admin/sous-types-produits' },
   { label: 'Demandes', icon: MessageSquare, to: '/admin/demandes' },
 ]
 
